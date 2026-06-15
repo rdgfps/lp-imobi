@@ -1,6 +1,5 @@
 import React from "react"
 import { auth } from "@/lib/auth"
-import { redirect } from "next/navigation"
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { AdminHeader } from "@/components/admin/admin-header"
 
@@ -8,10 +7,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await auth()
 
   if (!session?.user) {
-    redirect("/admin/login")
+    return <>{children}</>
   }
 
-  // Don't show sidebar on login page
   return (
     <div className="min-h-screen bg-[#F4F6F9] flex">
       <AdminSidebar user={session.user} />

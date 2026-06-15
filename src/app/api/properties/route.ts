@@ -5,8 +5,8 @@ import { z } from "zod"
 import { ITEMS_PER_PAGE } from "@/lib/constants"
 
 const querySchema = z.object({
-  type: z.enum(["CASA", "APARTAMENTO", "TERRENO", "RURAL", "COMERCIAL"]).optional(),
-  purpose: z.enum(["VENDA", "ALUGUEL", "AMBOS"]).optional(),
+  type: z.enum(["all", "CASA", "APARTAMENTO", "TERRENO", "RURAL", "COMERCIAL"]).optional(),
+  purpose: z.enum(["all", "VENDA", "ALUGUEL", "AMBOS"]).optional(),
   city: z.string().optional(),
   neighborhood: z.string().optional(),
   minPrice: z.coerce.number().optional(),
@@ -14,12 +14,25 @@ const querySchema = z.object({
   bedrooms: z.coerce.number().optional(),
   minArea: z.coerce.number().optional(),
   maxArea: z.coerce.number().optional(),
-  status: z.enum(["DISPONIVEL", "VENDIDO", "ALUGADO", "RESERVADO", "INATIVO"]).optional(),
-  featured: z.enum(["true", "false"]).optional(),
+  status: z.enum(["all", "DISPONIVEL", "VENDIDO", "ALUGADO", "RESERVADO", "INATIVO"]).optional(),
+  featured: z.enum(["all", "true", "false"]).optional(),
   search: z.string().optional(),
   page: z.coerce.number().default(1),
   limit: z.coerce.number().default(ITEMS_PER_PAGE),
 })
+
+function withTimeout<T>(promise: Promise<T>, ms = 3000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error("Database query timed out")), ms)
+    }),
+  ])
+}
+
+function canQueryDatabase() {
+  return !process.env.DATABASE_URL?.includes("postgresql://root:@")
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,11 +50,11 @@ export async function GET(request: NextRequest) {
       published: true,
     }
 
-    if (status) where.status = status
+    if (status && status !== "all") where.status = status
     else where.status = "DISPONIVEL"
 
-    if (type) where.type = type
-    if (purpose && purpose !== "AMBOS") {
+    if (type && type !== "all") where.type = type
+    if (purpose && purpose !== "all" && purpose !== "AMBOS") {
       where.OR = [{ purpose }, { purpose: "AMBOS" }]
     }
     if (city && city !== "all") where.city = { contains: city, mode: "insensitive" }
@@ -67,17 +80,29 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    if (!canQueryDatabase()) {
+      return NextResponse.json({
+        data: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+      })
+    }
+
     const skip = (page - 1) * limit
-    const [properties, total] = await Promise.all([
-      prisma.property.findMany({
-        where,
-        include: { images: { orderBy: { order: "asc" }, take: 1 }, features: true },
-        orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-        skip,
-        take: limit,
-      }),
-      prisma.property.count({ where }),
-    ])
+    const [properties, total] = await withTimeout(
+      Promise.all([
+        prisma.property.findMany({
+          where,
+          include: { images: { orderBy: { order: "asc" }, take: 1 }, features: true },
+          orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+          skip,
+          take: limit,
+        }),
+        prisma.property.count({ where }),
+      ])
+    )
 
     return NextResponse.json({
       data: properties,

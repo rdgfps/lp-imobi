@@ -3,15 +3,12 @@ import React, { Suspense } from "react"
 import type { Metadata } from "next"
 import { SearchBar } from "@/components/property/search-bar"
 import { PropertyCard } from "@/components/property/property-card"
-import { PropertyGridSkeleton } from "@/components/property/property-skeleton"
 import { prisma } from "@/lib/db"
 import { ITEMS_PER_PAGE } from "@/lib/constants"
 import type { Property } from "@/types"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-
-
-import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Imóveis",
@@ -27,6 +24,19 @@ interface SearchParams {
   bedrooms?: string
   search?: string
   page?: string
+}
+
+function withTimeout<T>(promise: Promise<T>, ms = 3000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error("Database query timed out")), ms)
+    }),
+  ])
+}
+
+function canQueryDatabase() {
+  return !process.env.DATABASE_URL?.includes("postgresql://root:@")
 }
 
 async function getProperties(searchParams: SearchParams) {
@@ -61,18 +71,28 @@ async function getProperties(searchParams: SearchParams) {
     ]
   }
 
-  const [properties, total] = await Promise.all([
-    prisma.property.findMany({
-      where,
-      include: { images: { orderBy: { order: "asc" } }, features: true },
-      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-      skip,
-      take: limit,
-    }),
-    prisma.property.count({ where }),
-  ])
+  if (!canQueryDatabase()) {
+    return { properties: [] as Property[], total: 0, page, totalPages: 0 }
+  }
 
-  return { properties: properties as Property[], total, page, totalPages: Math.ceil(total / limit) }
+  try {
+    const [properties, total] = await withTimeout(
+      Promise.all([
+        prisma.property.findMany({
+          where,
+          include: { images: { orderBy: { order: "asc" } }, features: true },
+          orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+          skip,
+          take: limit,
+        }),
+        prisma.property.count({ where }),
+      ])
+    )
+
+    return { properties: properties as Property[], total, page, totalPages: Math.ceil(total / limit) }
+  } catch {
+    return { properties: [] as Property[], total: 0, page, totalPages: 0 }
+  }
 }
 
 export default async function ImoveisPage({

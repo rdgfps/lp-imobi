@@ -2,7 +2,7 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, ExternalLink, Menu, X, LayoutDashboard, Home, Users, Settings, Plus, LogOut } from "lucide-react"
+import { ExternalLink, Menu, X, LayoutDashboard, Home, Users, Settings, Plus, LogOut } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { SITE_CONFIG } from "@/lib/constants"

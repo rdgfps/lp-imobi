@@ -9,6 +9,13 @@ const loginSchema = z.object({
   password: z.string().min(6),
 })
 
+interface UserWithRole {
+  id: string
+  name: string
+  email: string
+  role: string
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt", maxAge: 24 * 60 * 60 },
   pages: {
@@ -18,15 +25,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
-        token.role = (user as any).role
-        token.name = user.name
-        token.email = user.email
+        const userWithRole = user as UserWithRole
+        token.id = userWithRole.id
+        token.role = userWithRole.role
+        token.name = userWithRole.name
+        token.email = userWithRole.email
       }
       return token
     },
     async session({ session, token }) {
-      if (token) {
+      if (token && session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
         session.user.name = token.name as string

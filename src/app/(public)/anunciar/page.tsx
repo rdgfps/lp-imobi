@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Phone, CheckCircle2, TrendingUp, Eye, Users } from "lucide-react"
+import { Phone, TrendingUp, Eye, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SITE_CONFIG } from "@/lib/constants"
 import { generateWhatsAppLink } from "@/lib/utils"

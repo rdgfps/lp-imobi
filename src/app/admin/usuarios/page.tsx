@@ -3,10 +3,7 @@ import type { Metadata } from "next"
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db"
-import { Plus, Edit, Shield } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import Link from "next/link"
+import { Shield } from "lucide-react"
 
 
 import { CreateUserDialog } from "@/components/admin/create-user-dialog"

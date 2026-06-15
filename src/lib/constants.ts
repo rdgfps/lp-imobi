@@ -3,7 +3,7 @@ export const SITE_CONFIG = {
   description: "A imobiliária mais completa de Canguçu e região. Casas, apartamentos, terrenos e imóveis rurais.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "5553999999999",
-  email: "contato@canguçuimoveis.com.br",
+  email: "contato@cangucu-imoveis.com.br",
   phone: "(53) 9 9999-9999",
   address: "Rua Coronel Fonseca, 123 - Centro, Canguçu/RS",
   city: "Canguçu",

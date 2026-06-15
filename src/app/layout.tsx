@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body style={{ fontFamily: "'Inter', 'Manrope', system-ui, sans-serif" }}>
+      <body>
         {children}
       </body>
     </html>

@@ -2,15 +2,13 @@ export const dynamic = "force-dynamic"
 import React from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Plus, Search, Filter, Edit, Eye, Trash2, Star, ToggleLeft, ToggleRight } from "lucide-react"
+import { Plus, Search, Filter, Eye, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { formatCurrency } from "@/lib/utils"
 import { DeletePropertyButton } from "@/components/admin/delete-property-button"
-
-
 import { TogglePropertyActions } from "@/components/admin/toggle-property-actions"
 
 export const metadata: Metadata = { title: "Imóveis | Admin" }

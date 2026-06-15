@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { SITE_CONFIG } from "@/lib/constants"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Settings, Lock, Phone, Globe, Mail } from "lucide-react"
+import { Settings, Lock, Phone, Globe } from "lucide-react"
 
 
 

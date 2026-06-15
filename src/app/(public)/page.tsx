@@ -6,30 +6,48 @@ import { ArrowRight, CheckCircle2, Phone, Star, MapPin, Shield, Clock, Users } f
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/property/search-bar"
 import { PropertyCard } from "@/components/property/property-card"
-import { PropertyCardSkeleton } from "@/components/property/property-skeleton"
 import { SITE_CONFIG } from "@/lib/constants"
 import { generateWhatsAppLink } from "@/lib/utils"
 import { prisma } from "@/lib/db"
 import type { Property } from "@/types"
 
 
+function withTimeout<T>(promise: Promise<T>, ms = 3000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error("Database query timed out")), ms)
+    }),
+  ])
+}
+
+function canQueryDatabase() {
+  return !process.env.DATABASE_URL?.includes("postgresql://root:@")
+}
+
 
 
 async function getFeaturedProperties(): Promise<Property[]> {
+  if (!canQueryDatabase()) return []
+
   try {
-    let properties = await prisma.property.findMany({
-      where: { featured: true, published: true, status: "DISPONIVEL" },
-      include: { images: true, features: true },
-      orderBy: { updatedAt: "desc" },
-      take: 3,
-    })
-    if (properties.length === 0) {
-      properties = await prisma.property.findMany({
-        where: { published: true, status: "DISPONIVEL" },
+    let properties = await withTimeout(
+      prisma.property.findMany({
+        where: { featured: true, published: true, status: "DISPONIVEL" },
         include: { images: true, features: true },
-        orderBy: { createdAt: "desc" },
+        orderBy: { updatedAt: "desc" },
         take: 3,
       })
+    )
+    if (properties.length === 0) {
+      properties = await withTimeout(
+        prisma.property.findMany({
+          where: { published: true, status: "DISPONIVEL" },
+          include: { images: true, features: true },
+          orderBy: { createdAt: "desc" },
+          take: 3,
+        })
+      )
     }
     return properties as Property[]
   } catch {
@@ -38,13 +56,17 @@ async function getFeaturedProperties(): Promise<Property[]> {
 }
 
 async function getLatestProperties(): Promise<Property[]> {
+  if (!canQueryDatabase()) return []
+
   try {
-    const properties = await prisma.property.findMany({
-      where: { published: true, status: "DISPONIVEL" },
-      include: { images: true, features: true },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-    })
+    const properties = await withTimeout(
+      prisma.property.findMany({
+        where: { published: true, status: "DISPONIVEL" },
+        include: { images: true, features: true },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+      })
+    )
     return properties as Property[]
   } catch {
     return []
