@@ -1,0 +1,137 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/client"
+  previewFeatures = ["driverAdapters"]
+  engineType      = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  CORRETOR
+}
+
+enum PropertyStatus {
+  DISPONIVEL
+  VENDIDO
+  ALUGADO
+  RESERVADO
+  INATIVO
+}
+
+enum PropertyType {
+  CASA
+  APARTAMENTO
+  TERRENO
+  RURAL
+  COMERCIAL
+}
+
+enum PropertyPurpose {
+  VENDA
+  ALUGUEL
+  AMBOS
+}
+
+enum PropertyBadge {
+  DESTAQUE
+  OPORTUNIDADE
+  NOVO
+  EXCLUSIVO
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  password      String
+  role          UserRole  @default(CORRETOR)
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  properties    Property[]
+  auditLogs     AuditLog[]
+  @@map("users")
+}
+
+model Property {
+  id            String          @id @default(cuid())
+  title         String
+  description   String
+  type          PropertyType
+  purpose       PropertyPurpose
+  status        PropertyStatus  @default(DISPONIVEL)
+  badge         PropertyBadge?
+  featured      Boolean         @default(false)
+  published     Boolean         @default(true)
+  price         Float
+  condoFee      Float?
+  iptu          Float?
+  area          Float
+  bedrooms      Int?
+  bathrooms     Int?
+  suites        Int?
+  parkingSpots  Int?
+  floor         Int?
+  address       String
+  neighborhood  String
+  city          String
+  state         String          @default("RS")
+  zipCode       String?
+  latitude      Float?
+  longitude     Float?
+  images        PropertyImage[]
+  features      PropertyFeature[]
+  createdBy     User            @relation(fields: [userId], references: [id])
+  userId        String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  @@map("properties")
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  url        String
+  alt        String?
+  order      Int      @default(0)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
+  createdAt  DateTime @default(now())
+  @@map("property_images")
+}
+
+model PropertyFeature {
+  id         String   @id @default(cuid())
+  name       String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
+  @@map("property_features")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  ipAddress String?
+  createdAt DateTime @default(now())
+  @@map("audit_logs")
+}
+
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  count     Int      @default(0)
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("rate_limits")
+}
