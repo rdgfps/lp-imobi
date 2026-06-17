@@ -184,7 +184,8 @@ export function PropertyForm({ property, mode }: PropertyFormProps) {
         }
       } else {
         const err = await response.json()
-        setError(err.error || "Erro ao salvar imóvel.")
+        const firstDetail = Array.isArray(err.details) ? err.details[0]?.message : null
+        setError(firstDetail || err.error || "Erro ao salvar imóvel.")
       }
     } catch {
       setError("Erro de conexão. Tente novamente.")

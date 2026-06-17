@@ -4,6 +4,11 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { z } from "zod"
 
+const imageUrlSchema = z.string().refine(
+  (value) => value.startsWith("/uploads/") || z.string().url().safeParse(value).success,
+  "Imagem invÃ¡lida"
+)
+
 const updateSchema = z.object({
   title: z.string().min(5).max(200).optional(),
   description: z.string().min(10).max(5000).optional(),
@@ -30,7 +35,7 @@ const updateSchema = z.object({
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
   features: z.array(z.string().max(100)).max(50).optional(),
-  images: z.array(z.string()).max(20).optional(),
+  images: z.array(imageUrlSchema).max(20).optional(),
 })
 
 export async function PUT(
@@ -63,7 +68,7 @@ export async function PUT(
     const parsed = updateSchema.safeParse(body)
 
     if (!parsed.success) {
-      return NextResponse.json({ error: "Dados inválidos" }, { status: 400 })
+      return NextResponse.json({ error: "Dados inválidos", details: parsed.error.errors }, { status: 400 })
     }
 
     const { features, images, ...propertyData } = parsed.data

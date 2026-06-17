@@ -4,6 +4,11 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { z } from "zod"
 
+const imageUrlSchema = z.string().refine(
+  (value) => value.startsWith("/uploads/") || z.string().url().safeParse(value).success,
+  "Imagem invÃ¡lida"
+)
+
 const propertySchema = z.object({
   title: z.string().min(5).max(200),
   description: z.string().min(10).max(5000),
@@ -30,7 +35,7 @@ const propertySchema = z.object({
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
   features: z.array(z.string().max(100)).max(50).default([]),
-  images: z.array(z.string().url()).max(20).default([]),
+  images: z.array(imageUrlSchema).max(20).default([]),
 })
 
 export async function POST(request: NextRequest) {
